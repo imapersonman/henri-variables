@@ -4,6 +4,9 @@ class Expression:
 
     def interpret(self):
         raise Exception("interpret unimplemented")
+    
+    def substitute(self, v, expr):
+        raise Exception("substitute unimplemented")
 
 class InterpreterError:
     def __init__(self, msg):
@@ -24,8 +27,14 @@ class Int(IntExpression):
     def interpret(self):
         return self.value
     
+    def substitute(self, v, expr):
+        return self
+    
     def __repr__(self):
         return "{}".format(self.value)
+    
+    def __eq__(self, other):
+        return isinstance(other, Int) and self.value == other.value
 
 class Plus(IntExpression):
     def __init__(self, l: IntExpression, r: IntExpression):
@@ -50,10 +59,16 @@ class Plus(IntExpression):
             return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be added.".format(self.r, r_interpreted))
         return l_interpreted + r_interpreted
     
+    def substitute(self, v, expr):
+        return Plus(self.l.substitute(v, expr), self.r.substitute(v, expr))
+    
     def __repr__(self):
         l_repr = "({})".format(self.l) if type(self.l) == Plus else self.l
         r_repr = "({})".format(self.r) if type(self.r) == Plus else self.r
         return "{} + {}".format(l_repr, r_repr)
+    
+    def __eq__(self, other):
+        return isinstance(other, Plus) and self.l == other.l and self.r == other.r
 
 class BooleanExpression(Expression):
     def __init__(self):
@@ -74,10 +89,16 @@ class Equals(BooleanExpression):
             return r_interpreted
         return l_interpreted == r_interpreted
     
+    def substitute(self, v, expr):
+        return Equals(self.l.substitute(v, expr), self.r.substitute(v, expr))
+    
     def __repr__(self):
         l_repr = "({})".format(self.l) if type(self.l) == Equals else self.l
         r_repr = "({})".format(self.r) if type(self.r) == Equals else self.r
         return "{} = {}".format(l_repr, r_repr)
+    
+    def __eq__(self, other):
+        return isinstance(other, Equals) and self.l == other.l and self.r == other.r
 
 class Var(Expression):
     def __init__(self, id: str):
@@ -86,6 +107,12 @@ class Var(Expression):
     
     def interpret(self):
         return InterpreterError("{} cannot be interpreted".format(self))
+    
+    def substitute(self, v, expr):
+        return expr if self == v else self
 
     def __repr__(self):
         return str(self.id)
+    
+    def __eq__(self, other):
+        return isinstance(other, Var) and self.id == other.id

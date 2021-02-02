@@ -24,3 +24,11 @@ class TestRepresentation(unittest.TestCase):
         self.assertEqual(b_2_E_3.__repr__(), "2 = 3")
         self.assertEqual(b_P_a_3_E_P_n2_3.__repr__(), "a + 3 = -2 + 3")
     
+    def test_substitute(self):
+        self.assertEqual(a.substitute(b, i_1), a)
+        self.assertEqual(a.substitute(a, i_1), i_1)
+        self.assertEqual(Plus(a, b).substitute(a, i_1), Plus(i_1, b))
+        self.assertEqual(Plus(a, b).substitute(b, i_1), Plus(a, i_1))
+        self.assertEqual(Equals(a, b).substitute(a, i_1), Equals(i_1, b))
+        self.assertEqual(Equals(a, b).substitute(b, i_1), Equals(a, i_1))
+    
