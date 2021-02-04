@@ -7,4 +7,5 @@ class Question:
         return self.msg
     
     def check_answer(self, possible_answer):
-        return "Correct!" if self.answer(possible_answer) else "Incorrect"
+        status = "Correct!" if self.answer(possible_answer) else "Incorrect."
+        return "Your answer was '{}'.  That's {}".format(possible_answer, status)
