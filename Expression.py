@@ -36,11 +36,13 @@ class Int(IntExpression):
     def __eq__(self, other):
         return isinstance(other, Int) and self.value == other.value
 
-class Plus(IntExpression):
-    def __init__(self, l: IntExpression, r: IntExpression):
+class BinaryExpression(Expression):
+    def __init__(self, name: str, l: IntExpression, r: IntExpression, f):
         super().__init__()
+        self.name = name
         self.l = l
         self.r = r
+        self.f = f
         if (not isinstance(self.l, Expression)):
             raise Exception("{} is not an Expression!".format(self.l))
         if (not isinstance(self.r, Expression)):
@@ -51,26 +53,35 @@ class Plus(IntExpression):
         if (type(l_interpreted) == InterpreterError):
             return l_interpreted
         if (type(l_interpreted) != int):
-            return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be added.".format(self.l, l_interpreted))
+            return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with '{}'.".format(self.l, l_interpreted, self.name))
         r_interpreted = self.r.interpret()
         if (type(r_interpreted) == InterpreterError):
             return r_interpreted
         if (type(l_interpreted) != int):
-            return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be added.".format(self.r, r_interpreted))
-        return l_interpreted + r_interpreted
+            return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with '{}'".format(self.r, r_interpreted, self.name))
+        return self.f(l_interpreted, r_interpreted)
     
     def substitute(self, v, expr):
-        return Plus(self.l.substitute(v, expr), self.r.substitute(v, expr))
+        return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f)
     
     def __repr__(self):
         l_repr = "({})".format(self.l) if type(self.l) == Plus else self.l
         r_repr = "({})".format(self.r) if type(self.r) == Plus else self.r
-        return "{} + {}".format(l_repr, r_repr)
+        return "{} {} {}".format(l_repr, self.name, r_repr)
     
     def __eq__(self, other):
-        return isinstance(other, Plus) and self.l == other.l and self.r == other.r
+        return isinstance(other, BinaryExpression) and self.name == other.name and self.l == other.l and self.r == other.r
 
-class BooleanExpression(Expression):
+
+class Plus(BinaryExpression):
+    def __init__(self, l: IntExpression, r: IntExpression):
+        super().__init__("+", l, r, lambda x, y: x + y)
+    
+class Minus(BinaryExpression):
+    def __init__(self, l, r):
+        super().__init__("-", l, r, lambda x, y: x - y)
+
+class BooleanExpression(BinaryExpression):
     def __init__(self):
         self.type = "boolean"
 
