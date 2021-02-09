@@ -35,5 +35,6 @@ class QuestionMachine:
         if (question.check_answer(answer)):
             self.current_index += 1
             print("{}Correct!".format(response_prefix))
+            print("\nNext Question: {}".format(self.ask()))
         else:
             print("{}Incorrect.  Try again.".format(response_prefix))
