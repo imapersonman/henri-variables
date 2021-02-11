@@ -8,6 +8,9 @@ class Expression:
     def substitute(self, v, expr):
         raise Exception("substitute unimplemented")
 
+    def rewrite_subexpression(self, subexpression, equivalent):
+        raise Exception("evalute_subexpression unimplemented")
+
 class InterpreterError:
     def __init__(self, msg):
         self.msg = msg
@@ -29,6 +32,11 @@ class Int(IntExpression):
     
     def substitute(self, v, expr):
         return self
+
+    def rewrite_subexpression(self, subexpression, equivalent):
+        if subexpression == self and equivalent.interpret() == self.interpret():
+            return equivalent
+        return self
     
     def __repr__(self):
         return "{}".format(self.value)
@@ -36,7 +44,7 @@ class Int(IntExpression):
     def __eq__(self, other):
         return isinstance(other, Int) and self.value == other.value
 
-class BinaryExpression(Expression):
+class BinaryExpression(IntExpression):
     def __init__(self, name: str, l: IntExpression, r: IntExpression, f):
         super().__init__()
         self.name = name
@@ -60,6 +68,11 @@ class BinaryExpression(Expression):
         if (type(l_interpreted) != int):
             return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with '{}'".format(self.r, r_interpreted, self.name))
         return self.f(l_interpreted, r_interpreted)
+
+    def rewrite_subexpression(self, subexpression, equivalent):
+        if subexpression == self and equivalent.interpret() == self.interpret():
+            return equivalent
+        return BinaryExpression(self.name, self.l.rewrite_subexpression(subexpression, equivalent), self.r.rewrite_subexpression(subexpression, equivalent), self.f)
     
     def substitute(self, v, expr):
         return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f)
@@ -80,6 +93,10 @@ class Plus(BinaryExpression):
 class Minus(BinaryExpression):
     def __init__(self, l, r):
         super().__init__("-", l, r, lambda x, y: x - y)
+
+class Times(BinaryExpression):
+    def __init__(self, l, r):
+        super().__init__("*", l, r, lambda x, y: x * y)
 
 class BooleanExpression(BinaryExpression):
     def __init__(self):
