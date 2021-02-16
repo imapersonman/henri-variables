@@ -5,7 +5,7 @@ class QuestionMachine:
     
     def ask(self):
         if self.current_index >= len(self.questions):
-            return "You're done! Congratulations!"
+            return "None!  You're Finished!"
         return self.questions[self.current_index]
     
     def answer(self, answer):

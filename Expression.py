@@ -43,6 +43,9 @@ class Int(IntExpression):
     
     def __eq__(self, other):
         return isinstance(other, Int) and self.value == other.value
+    
+    def __hash__(self):
+        return hash(self.value)
 
 class BinaryExpression(IntExpression):
     def __init__(self, name: str, l: IntExpression, r: IntExpression, f):
@@ -84,6 +87,9 @@ class BinaryExpression(IntExpression):
     
     def __eq__(self, other):
         return isinstance(other, BinaryExpression) and self.name == other.name and self.l == other.l and self.r == other.r
+    
+    def __hash__(self):
+        return hash((self.name, self.l, self.r))
 
 
 class Plus(BinaryExpression):
@@ -127,6 +133,9 @@ class Equals(BooleanExpression):
     
     def __eq__(self, other):
         return isinstance(other, Equals) and self.l == other.l and self.r == other.r
+    
+    def __hash__(self):
+        return hash(("=", self.l, self.r))
 
 class Var(Expression):
     def __init__(self, id: str):
@@ -144,3 +153,6 @@ class Var(Expression):
     
     def __eq__(self, other):
         return isinstance(other, Var) and self.id == other.id
+    
+    def __hash__(self):
+        return hash(("var", self.id))

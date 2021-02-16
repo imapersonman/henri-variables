@@ -4,7 +4,7 @@ from Question import Question
 from Expression import Int, Plus, Equals, Var, Minus
 
 def check_q(i):
-    return lambda a: a.interpret() == i
+    return lambda a: a == i
 
 questions = [
     # Evaluate 12 + a when a = 4.
