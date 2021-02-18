@@ -81,8 +81,8 @@ class BinaryExpression(IntExpression):
         return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f)
     
     def __repr__(self):
-        l_repr = "({})".format(self.l) if type(self.l) == Plus else self.l
-        r_repr = "({})".format(self.r) if type(self.r) == Plus else self.r
+        l_repr = "({})".format(self.l) if isinstance(self.l, BinaryExpression) else self.l
+        r_repr = "({})".format(self.r) if isinstance(self.r, BinaryExpression) else self.r
         return "{} {} {}".format(l_repr, self.name, r_repr)
     
     def __eq__(self, other):
