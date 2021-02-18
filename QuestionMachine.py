@@ -8,7 +8,7 @@ class QuestionMachine:
             return "None!  You're Finished!"
         return self.questions[self.current_index]
     
-    def answer(self, answer):
+    def check(self, answer):
         if self.current_index >= len(self.questions):
             print("No more questions!")
         question = self.questions[self.current_index]
