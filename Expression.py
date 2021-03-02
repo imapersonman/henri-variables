@@ -11,6 +11,18 @@ class Expression:
     def rewrite_subexpression(self, subexpression, equivalent):
         raise Exception("evalute_subexpression unimplemented")
 
+    def pos_neg_to_minus(self):
+        raise Exception("pos_neg_to_minus unimplemented")
+
+    def to_pos_neg(self):
+        raise Exception("to_pos_neg unimplemented")
+
+    def associate_l_to_r(self):
+        raise Exception("associate_l_to_r unimplemented")
+
+    def associate_r_to_l(self):
+        raise Exception("associate_r_to_l unimplemented")
+
 class InterpreterError:
     def __init__(self, msg):
         self.msg = msg
@@ -38,6 +50,18 @@ class Int(IntExpression):
             return equivalent
         return self
     
+    def pos_neg_to_minus(self):
+        return self
+    
+    def to_pos_neg(self):
+        return self
+
+    def associate_l_to_r(self):
+        return self
+
+    def associate_r_to_l(self):
+        return self
+    
     def __repr__(self):
         return "{}".format(self.value)
     
@@ -46,6 +70,49 @@ class Int(IntExpression):
     
     def __hash__(self):
         return hash(self.value)
+    
+class Negative(IntExpression):
+    def __init__(self, expr):
+        super().__init__()
+        self.expr = expr
+    
+    def interpret(self):
+        expr_interpreted = self.expr.interpret()
+        if type(expr_interpreted) == InterpreterError:
+            return expr_interpreted
+        if (type(expr_interpreted) != int):
+            return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with negative.".format(self.expr, expr_interpreted)) 
+
+    def substitute(self, v, new_expr):
+        return Negative(self.expr.substitute(v, new_expr))
+
+    def pos_neg_to_minus(self):
+        return Negative(self.expr.pos_neg_to_minus())
+
+    def rewrite_subexpression(self, subexpression, equivalent):
+        if subexpression == self and equivalent.interpret() == self.interpret():
+            return equivalent
+        return Negative(self.expr.rewrite_subexpression(subexpression, equivalent))
+    
+    def to_pos_neg(self):
+        return Negative(self.expr.to_pos_neg())
+
+    def associate_l_to_r(self):
+        return self
+
+    def associate_r_to_l(self):
+        return self
+    
+    def __repr__(self):
+        if isinstance(self.expr, BinaryExpression):
+            return "-({})".format(self.expr)
+        return "-{}".format(self.expr)
+    
+    def __eq__(self, other):
+        return isinstance(other, Negative) and self.expr == other.expr
+    
+    def __hash__(self):
+        return hash(self.expr)
 
 class BinaryExpression(IntExpression):
     def __init__(self, name: str, l: IntExpression, r: IntExpression, f):
@@ -79,6 +146,12 @@ class BinaryExpression(IntExpression):
     
     def substitute(self, v, expr):
         return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f)
+
+    def associate_l_to_r(self):
+        return self
+
+    def associate_r_to_l(self):
+        return self
     
     def __repr__(self):
         l_repr = "({})".format(self.l) if isinstance(self.l, BinaryExpression) else self.l
@@ -96,13 +169,53 @@ class Plus(BinaryExpression):
     def __init__(self, l: IntExpression, r: IntExpression):
         super().__init__("+", l, r, lambda x, y: x + y)
     
+    def to_pos_neg(self):
+        return Plus(self.l.to_pos_neg(), self.r.to_pos_neg())
+    
+    def pos_neg_to_minus(self):
+        if isinstance(self.r, Negative):
+            return Minus(self.l.pos_neg_to_minus(), self.r.expr.pos_neg_to_minus())
+        return Plus(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
+
+    def associate_l_to_r(self):
+        if isinstance(self.l, Plus):
+            return Plus(self.l.l, Plus(self.l.r, self.r))
+        return self
+
+    def associate_r_to_l(self):
+        if isinstance(self.r, Plus):
+            return Plus(Plus(self.l, self.r.l), self.r.r)
+        return self
+
 class Minus(BinaryExpression):
     def __init__(self, l, r):
         super().__init__("-", l, r, lambda x, y: x - y)
+    
+    def to_pos_neg(self):
+        return Plus(self.l.to_pos_neg(), Negative(self.r.to_pos_neg()))
+    
+    def pos_neg_to_minus(self):
+        return Minus(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
 
 class Times(BinaryExpression):
     def __init__(self, l, r):
         super().__init__("*", l, r, lambda x, y: x * y)
+    
+    def to_pos_neg(self):
+        return Times(self.l.to_pos_neg(), self.r.to_pos_neg())
+    
+    def pos_neg_to_minus(self):
+        return Times(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
+
+    def associate_l_to_r(self):
+        if isinstance(self.l, Times):
+            return Times(self.l.l, Times(self.l.r, self.r))
+        return self
+
+    def associate_r_to_l(self):
+        if isinstance(self.r, Times):
+            return Times(Times(self.l, self.r.l), self.r.r)
+        return self
 
 class BooleanExpression(BinaryExpression):
     def __init__(self):
@@ -126,6 +239,12 @@ class Equals(BooleanExpression):
     def substitute(self, v, expr):
         return Equals(self.l.substitute(v, expr), self.r.substitute(v, expr))
     
+    def to_pos_neg(self):
+        return Equals(self.l.to_pos_neg(), self.r.to_pos_neg())
+    
+    def pos_neg_to_minus(self):
+        return Equals(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
+    
     def __repr__(self):
         l_repr = "({})".format(self.l) if type(self.l) == Equals else self.l
         r_repr = "({})".format(self.r) if type(self.r) == Equals else self.r
@@ -147,6 +266,18 @@ class Var(Expression):
     
     def substitute(self, v, expr):
         return expr if self == v else self
+    
+    def to_pos_neg(self):
+        return self
+
+    def associate_l_to_r(self):
+        return self
+
+    def associate_r_to_l(self):
+        return self
+
+    def pos_neg_to_minus(self):
+        return self
 
     def __repr__(self):
         return str(self.id)

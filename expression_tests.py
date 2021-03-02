@@ -1,5 +1,5 @@
 import unittest
-from Expression import Var, Int, Plus, Minus, Equals, Times
+from Expression import Var, Int, Plus, Minus, Equals, Times, Negative
 
 i_1, i_2, i_n2, i_3, i_4, i_5, i_6, i_7 = Int(1), Int(2), Int(-2), Int(3), Int(4), Int(5), Int(6), Int(7)
 a, b, c, x, y, z, cool = Var("a"), Var("b"), Var("c"), Var("x"), Var("y"), Var("z"), Var("cool")
@@ -54,3 +54,44 @@ class TestRepresentation(unittest.TestCase):
         # Non-atomic replace subexpression with unequivalent within non-atomic expression
         self.assertEqual(Plus(Int(10), Plus(Int(11), Int(12))).rewrite_subexpression(Plus(Int(11), Int(12)), Int(22)), Plus(Int(11), Int(12)))
     
+    def test_to_pos_neg(self):
+        self.assertEqual(Int(12).to_pos_neg(), Int(12))
+        self.assertEqual(Var("a").to_pos_neg(), Int("a"))
+        self.assertEqual(Negative(Int(12).to_pos_neg()), Negative(Int(12)))
+        self.assertEqual(Plus(Int(3), Int(5)).to_pos_neg(), Plus(Int(3), Int(5)))
+        self.assertEqual(Times(Int(3), Int(5)).to_pos_neg(), Times(Int(3), Int(5)))
+        self.assertEqual(Minus(Int(3), Int(5)).to_pos_neg(), Plus(Int(3), Negative(Int(5))))
+        self.assertEqual(Negative(Minus(Int(3), Int(5))).to_pos_neg(), Negative(Plus(Int(3), Negative(Int(5)))))
+        self.assertEqual(Times(Minus(Int(3), Int(5)), Minus(Int(6), Int(7))).to_pos_neg(), Times(Plus(Int(3), Negative(Int(5))), Plus(Int(6), Negative(Int(7)))))
+        self.assertEqual(Plus(Minus(Int(3), Int(5)), Minus(Int(6), Int(7))).to_pos_neg(), Plus(Plus(Int(3), Negative(Int(5))), Plus(Int(6), Negative(Int(7)))))
+        self.assertEqual(Equals(Minus(Int(3), Int(5)), Minus(Int(6), Int(7))).to_pos_neg(), Equals(Plus(Int(3), Negative(Int(5))), Plus(Int(6), Negative(Int(7)))))
+    
+    def test_associate(self):
+        self.assertEqual(Int(12).associate_l_to_r(), Int(12))
+        self.assertEqual(Int(12).associate_r_to_l(), Int(12))
+        self.assertEqual(Var("a").associate_l_to_r(), Var("a"))
+        self.assertEqual(Var("a").associate_r_to_l(), Var("a"))
+        self.assertEqual(Plus(Int(1), Int(2)).associate_l_to_r(), Plus(Int(1), Int(2)))
+        self.assertEqual(Times(Int(1), Int(2)).associate_l_to_r(), Times(Int(1), Int(2)))
+        # self.assertEqual(Plus(Int(1), Int(2)).associate_r_to_l(), Plus(Int(1), Int(2)))
+        # self.assertEqual(Times(Int(1), Int(2)).associate_r_to_l(), Times(Int(1), Int(2)))
+        # (1 + 2) + 3 -> 1 + (2 + 3)
+        # self.assertEqual(Plus(Plus(Int(1), Int(2)), Int(3)).associate_l_to_r(), Plus(Int(1), Plus(Int(2), Int(3))))
+        # 1 + (2 + 3) -> (1 + 2) + 3
+        # self.assertEqual(Plus(Int(1), Plus(Int(2), Int(3))).associate_r_to_l(), Plus(Plus(Int(1), Int(2)), Int(3)))
+        # (1 * 2) * 3 -> 1 * (2 * 3)
+        # self.assertEqual(Times(Times(Int(1), Int(2)), Int(3)).associate_l_to_r(), Times(Int(1), Times(Int(2), Int(3))))
+        # 1 * (2 * 3) -> (1 * 2) * 3
+        # self.assertEqual(Times(Int(1), Times(Int(2), Int(3))).associate_r_to_l(), Times(Times(Int(1), Int(2)), Int(3)))
+        # 1 - (2 - 3) -> 1 - (2 - 3)
+        # self.assertEqual(Minus(Int(1), Minus(Int(2), Int(3))).associate_r_to_l(), Minus(Int(1), Minus(Int(2), Int(3))))
+        # (1 - 2) - 3 -> (1 - 2) - 3
+        # self.assertEqual(Minus(Minus(Int(1), Int(2)), Int(3)).associate_l_to_r(), Minus(Minus(Int(1), Int(2)), Int(3)))
+        # # ((1 + (2 + 3)) * (1 + (2 + 3)))
+        # self.assertEqual(Times(Plus(Int(1), Plus(Int(2), Int(3))), Plus(Int(1), Plus(Int(2), Int(3)))).associate_r_to_l(), Times(Plus(Int(1), Plus(Int(2), Int(3))), Plus(Int(1), Plus(Int(2), Int(3)))))
+        # # (((1 + 2) + 3) * ((1 + 2) + 3))
+        # self.assertEqual(Times(Plus(Plus(Int(1), Int(2)), Int(3)), Plus(Plus(Int(1), Int(2)), Int(3))).associate_l_to_r(), Times(Plus(Plus(Int(1), Int(2)), Int(3)), Plus(Plus(Int(1), Int(2)), Int(3))))
+        # # ((1 + (2 + 3)) - (1 + (2 + 3)))
+        # self.assertEqual(Minus(Plus(Int(1), Plus(Int(2), Int(3))), Plus(Int(1), Plus(Int(2), Int(3)))).associate_r_to_l(), Minus(Plus(Int(1), Plus(Int(2), Int(3))), Plus(Int(1), Plus(Int(2), Int(3)))))
+        # # (((1 + 2) + 3) - ((1 + 2) + 3))
+        # self.assertEqual(Minus(Plus(Plus(Int(1), Int(2)), Int(3)), Plus(Plus(Int(1), Int(2)), Int(3))).associate_l_to_r(), Minus(Plus(Plus(Int(1), Int(2)), Int(3)), Plus(Plus(Int(1), Int(2)), Int(3))))
