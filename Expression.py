@@ -23,6 +23,9 @@ class Expression:
     def associate_r_to_l(self):
         raise Exception("associate_r_to_l unimplemented")
 
+    def to_python_string(self):
+        raise Exception("to_python_string unimplemented")
+
 class InterpreterError:
     def __init__(self, msg):
         self.msg = msg
@@ -37,6 +40,8 @@ class IntExpression(Expression):
 class Int(IntExpression):
     def __init__(self, value: int):
         super().__init__()
+        if value < 0:
+            raise Exception("Int value must be greater than or equal to 0")
         self.value = value
     
     def interpret(self):
@@ -49,6 +54,9 @@ class Int(IntExpression):
         if subexpression == self and equivalent.interpret() == self.interpret():
             return equivalent
         return self
+    
+    def to_python_string(self):
+        return "Int({})".format(self.value)
     
     def pos_neg_to_minus(self):
         return self
@@ -96,6 +104,9 @@ class Negative(IntExpression):
     
     def to_pos_neg(self):
         return Negative(self.expr.to_pos_neg())
+    
+    def to_python_string(self):
+        return "Negative({})".format(self.expr.to_python_string())
 
     def associate_l_to_r(self):
         return self
@@ -146,6 +157,9 @@ class BinaryExpression(IntExpression):
     
     def substitute(self, v, expr):
         return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f)
+    
+    def to_binary_python_string(self, class_name):
+        return "{}({}, {})".format(class_name, self.l.to_python_string(), self.r.to_python_string())
 
     def associate_l_to_r(self):
         return self
@@ -176,6 +190,9 @@ class Plus(BinaryExpression):
         if isinstance(self.r, Negative):
             return Minus(self.l.pos_neg_to_minus(), self.r.expr.pos_neg_to_minus())
         return Plus(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
+    
+    def to_python_string(self):
+        return self.to_binary_python_string("Plus")
 
     def associate_l_to_r(self):
         if isinstance(self.l, Plus):
@@ -194,6 +211,9 @@ class Minus(BinaryExpression):
     def to_pos_neg(self):
         return Plus(self.l.to_pos_neg(), Negative(self.r.to_pos_neg()))
     
+    def to_python_string(self):
+        return self.to_binary_python_string("Minus")
+    
     def pos_neg_to_minus(self):
         return Minus(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
 
@@ -206,6 +226,9 @@ class Times(BinaryExpression):
     
     def pos_neg_to_minus(self):
         return Times(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
+    
+    def to_python_string(self):
+        return self.to_binary_python_string("Times")
 
     def associate_l_to_r(self):
         if isinstance(self.l, Times):
@@ -242,6 +265,9 @@ class Equals(BooleanExpression):
     def to_pos_neg(self):
         return Equals(self.l.to_pos_neg(), self.r.to_pos_neg())
     
+    def to_python_string(self):
+        return "Equals({}, {})".format(self.l.to_python_string(), self.r.to_python_string())
+    
     def pos_neg_to_minus(self):
         return Equals(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
     
@@ -269,6 +295,9 @@ class Var(Expression):
     
     def to_pos_neg(self):
         return self
+    
+    def to_python_string(self):
+        return "Var(\"{}\")".format(self.id)
 
     def associate_l_to_r(self):
         return self
