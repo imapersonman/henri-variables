@@ -162,9 +162,23 @@ class BinaryExpression(IntExpression):
         return "{}({}, {})".format(class_name, self.l.to_python_string(), self.r.to_python_string())
 
     def associate_l_to_r(self):
+        # This is redundant and I don't like it but I'm too lazy to actually clean up this code.
+        if not isinstance(self.l, BinaryExpression):
+            return self
+        if self.name == "+" and self.l.name == "+":
+            return Times(self.l.l, Times(self.l.r, self.r))
+        elif self.name == "*" and self.l.name == "*":
+            return Times(self.l.l, Times(self.l.r, self.r))
         return self
 
     def associate_r_to_l(self):
+        # This is redundant and I don't like it but I'm too lazy to actually clean up this code.
+        if not isinstance(self.r, BinaryExpression):
+            return self
+        if self.name == "+" and self.r.name == "+":
+            return Plus(Plus(self.l, self.r.l), self.r.r)
+        elif self.name == "*" and self.r.name == "*":
+            return Times(Times(self.l, self.r.l), self.r.r)
         return self
     
     def __repr__(self):
