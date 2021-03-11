@@ -89,7 +89,8 @@ class Negative(IntExpression):
         if type(expr_interpreted) == InterpreterError:
             return expr_interpreted
         if (type(expr_interpreted) != int):
-            return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with negative.".format(self.expr, expr_interpreted)) 
+            return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with negative.".format(self.expr, expr_interpreted))
+        return expr_interpreted
 
     def substitute(self, v, new_expr):
         return Negative(self.expr.substitute(v, new_expr))
@@ -166,7 +167,7 @@ class BinaryExpression(IntExpression):
         if not isinstance(self.l, BinaryExpression):
             return self
         if self.name == "+" and self.l.name == "+":
-            return Times(self.l.l, Times(self.l.r, self.r))
+            return Plus(self.l.l, Plus(self.l.r, self.r))
         elif self.name == "*" and self.l.name == "*":
             return Times(self.l.l, Times(self.l.r, self.r))
         return self
@@ -179,6 +180,13 @@ class BinaryExpression(IntExpression):
             return Plus(Plus(self.l, self.r.l), self.r.r)
         elif self.name == "*" and self.r.name == "*":
             return Times(Times(self.l, self.r.l), self.r.r)
+        return self
+    
+    def commute(self):
+        if self.name == "+":
+            return Plus(self.r, self.l)
+        if self.name == "*":
+            return Times(self.r, self.l)
         return self
     
     def __repr__(self):
