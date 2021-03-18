@@ -10,6 +10,9 @@ class Expression:
 
     def rewrite_subexpression(self, subexpression, equivalent):
         raise Exception("evalute_subexpression unimplemented")
+    
+    def rw_se(self, subexpression, equivalent):
+        return self.rewrite_subexpression(subexpression, equivalent)
 
     def pos_neg_to_minus(self):
         raise Exception("pos_neg_to_minus unimplemented")
