@@ -17,8 +17,8 @@ def conv_q(expr1_str, expr2_str, af):
     return Question("Convert the expression '{}' to '{}'".format(expr1_str, expr2_str), af)
 
 questions = [
-    conv_q("1 + (2 + 3)", "1 + (3 + 2)", check_answer(Plus(Int(1), Plus(Int(3), Int(2))))),
-    conv_q("(b * c) * a", "(c * b) * a", check_answer(Times(Times(Var("c"), Var("b")), Var("a")))),
+    #conv_q("1 + (2 + 3)", "1 + (3 + 2)", check_answer(Plus(Int(1), Plus(Int(3), Int(2))))),
+    #conv_q("(2 * 3) * a", "(c * b) * a", check_answer(Times(Times(Var("c"), Var("b")), Var("a")))),
     conv_q("(1 * 2) + (2 * 3)", "(2 * 1) + (3 * 2)", check_answer(Plus(Times(Int(2), Int(1)), Times(Int(3), Int(2))))),
     conv_q("1 + ((2 + 3) + 4)", "1 + ((3 + 4) + 2)", check_answer(Plus(Int(1), Plus(Plus(Int(3), Int(4)), Int(2))))),
     conv_q("(1 - 3) - 2", "(1 - 2) - 3", check_answer(Minus(Minus(Int(1), Int(2)), Int(3)))),
