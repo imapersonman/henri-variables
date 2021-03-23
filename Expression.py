@@ -17,14 +17,53 @@ class Expression:
     def pos_neg_to_minus(self):
         raise Exception("pos_neg_to_minus unimplemented")
 
+    def pnm(self):
+        return self.pos_neg_to_minus()
+    
+    def comm(self):
+        return self.commute()
+    
+    def commute(self):
+        raise Exception("commute unimplemented")
+
     def to_pos_neg(self):
         raise Exception("to_pos_neg unimplemented")
+    
+    def pn(self):
+        return self.to_pos_neg()
 
     def associate_l_to_r(self):
         raise Exception("associate_l_to_r unimplemented")
+    
+    def remove_add_zeroes(self):
+        raise Exception("remove_add_zeroes unimplemented")
+    
+    def alr(self):
+        return self.associate_l_to_r()
+
+    def arl(self):
+        return self.associate_r_to_l()
+    
+    def sub_alr(self, sub):
+        return self.rewrite_subexpression(sub, sub.associate_l_to_r())
+    
+    def sub_arl(self, sub):
+        return self.rewrite_subexpression(sub, sub.associate_r_to_l())
+    
+    def sub_comm(self, sub):
+        return self.rewrite_subexpression(sub, sub.commute())
 
     def associate_r_to_l(self):
         raise Exception("associate_r_to_l unimplemented")
+    
+    def minus_to_zero(self):
+        raise Exception("minus_to_zero unimplemented")
+    
+    def mz(self):
+        return self.minus_to_zero()
+    
+    def sub_mz(self, sub):
+        return self.rewrite_subexpression(sub, sub.mz())
 
     def to_python_string(self):
         raise Exception("to_python_string unimplemented")
@@ -39,6 +78,12 @@ class InterpreterError:
 class IntExpression(Expression):
     def __init__(self):
         self.type = "int"
+    
+    def minus_to_zero(self):
+        return self
+    
+    def remove_add_zeroes(self):
+        return self
 
 class Int(IntExpression):
     def __init__(self, value: int):
@@ -154,6 +199,20 @@ class BinaryExpression(IntExpression):
             return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with '{}'".format(self.r, r_interpreted, self.name))
         return self.f(l_interpreted, r_interpreted)
 
+    def pos_neg_to_minus(self):
+        if (self.name != "+"):
+            return self
+        if isinstance(self.r, Negative):
+            return Minus(self.l.pos_neg_to_minus(), self.r.expr.pos_neg_to_minus())
+        return Plus(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
+    
+    def remove_add_zeroes(self):
+        if self.name == "+" and self.l == Int(0):
+            return self.r.remove_add_zeroes()
+        if self.name == "+" and self.r == Int(0):
+            return self.l.remove_add_zeroes()
+        return BinaryExpression(self.name, self.l.remove_add_zeroes(), self.r.remove_add_zeroes(), self.f)
+
     def rewrite_subexpression(self, subexpression, equivalent):
         if subexpression == self and equivalent.interpret() == self.interpret():
             return equivalent
@@ -191,6 +250,16 @@ class BinaryExpression(IntExpression):
         if self.name == "*":
             return Times(self.r, self.l)
         return self
+    
+    def minus_to_zero(self):
+        if self.name == "-" and self.l == self.r:
+            return Int(0)
+        return self
+    
+    def to_pos_neg(self):
+        if self.name == "-":
+            return Plus(self.l.to_pos_neg(), Negative(self.r.to_pos_neg()))
+        return BinaryExpression(self.name, self.l.to_pos_neg(), self.r.to_pos_neg(), self.f)
     
     def __repr__(self):
         l_repr = "({})".format(self.l) if isinstance(self.l, BinaryExpression) else self.l
@@ -232,9 +301,6 @@ class Plus(BinaryExpression):
 class Minus(BinaryExpression):
     def __init__(self, l, r):
         super().__init__("-", l, r, lambda x, y: x - y)
-    
-    def to_pos_neg(self):
-        return Plus(self.l.to_pos_neg(), Negative(self.r.to_pos_neg()))
     
     def to_python_string(self):
         return self.to_binary_python_string("Minus")
