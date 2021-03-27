@@ -13,6 +13,12 @@ class Expression:
     
     def rw_se(self, subexpression, equivalent):
         return self.rewrite_subexpression(subexpression, equivalent)
+    
+    def dumb_rw_se(self, sube, equiv):
+        raise Exception("dumb_rw_se unimplemented")
+    
+    def plus_to_times(self):
+        raise Exception("plus_to_times unimplemented")
 
     def pos_neg_to_minus(self):
         raise Exception("pos_neg_to_minus unimplemented")
@@ -103,6 +109,11 @@ class Int(IntExpression):
             return equivalent
         return self
     
+    def dumb_rw_se(self, sube, equiv):
+        if (sube == self):
+            return equiv
+        return self
+    
     def to_python_string(self):
         return "Int({})".format(self.value)
     
@@ -150,6 +161,11 @@ class Negative(IntExpression):
         if subexpression == self and equivalent.interpret() == self.interpret():
             return equivalent
         return Negative(self.expr.rewrite_subexpression(subexpression, equivalent))
+    
+    def dumb_rw_se(self, sube, equiv):
+        if sube == self:
+            return equiv
+        return Negative(self.expr.dumb_rw_se(sube, equiv))
     
     def to_pos_neg(self):
         return Negative(self.expr.to_pos_neg())
@@ -199,6 +215,7 @@ class BinaryExpression(IntExpression):
             return InterpreterError("'{}' interprets to '{}', which is not an integer.  Only integers can be combined with '{}'".format(self.r, r_interpreted, self.name))
         return self.f(l_interpreted, r_interpreted)
 
+    # CURRENTLY BROKEN
     def pos_neg_to_minus(self):
         if (self.name != "+"):
             return self
@@ -217,6 +234,11 @@ class BinaryExpression(IntExpression):
         if subexpression == self and equivalent.interpret() == self.interpret():
             return equivalent
         return BinaryExpression(self.name, self.l.rewrite_subexpression(subexpression, equivalent), self.r.rewrite_subexpression(subexpression, equivalent), self.f)
+    
+    def dumb_rw_se(self, sube, equiv):
+        if (sube == self):
+            return equiv
+        return BinaryExpression(self.name, self.l.dumb_rw_se(sube, equiv), self.r.dumb_rw_se(sube, equiv), self.f)
     
     def substitute(self, v, expr):
         return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f)
@@ -353,6 +375,9 @@ class Equals(BooleanExpression):
     def substitute(self, v, expr):
         return Equals(self.l.substitute(v, expr), self.r.substitute(v, expr))
     
+    def dumb_rw_se(self, sube, equiv):
+        return Equals(self.l.dumb_rw_se(sube, equiv), self.r.dumb_rw_se(sube, equiv))
+    
     def to_pos_neg(self):
         return Equals(self.l.to_pos_neg(), self.r.to_pos_neg())
     
@@ -380,6 +405,11 @@ class Var(Expression):
     
     def interpret(self):
         return InterpreterError("{} cannot be interpreted".format(self))
+    
+    def dumb_rw_se(self, sube, equiv):
+        if self == sube:
+            return equiv
+        return self
     
     def substitute(self, v, expr):
         return expr if self == v else self
