@@ -17,8 +17,11 @@ class Expression:
     def dumb_rw_se(self, sube, equiv):
         raise Exception("dumb_rw_se unimplemented")
     
-    def plus_to_times(self):
-        raise Exception("plus_to_times unimplemented")
+    def combine_like_terms(self, likeness):
+        raise Exception("combine_like_terms unimplemented")
+    
+    def is_like_terms_with(self, other, likeness):
+        raise Exception("is_like_terms_with unimplemented")
 
     def pos_neg_to_minus(self):
         raise Exception("pos_neg_to_minus unimplemented")
@@ -98,6 +101,9 @@ class Int(IntExpression):
             raise Exception("Int value must be greater than or equal to 0")
         self.value = value
     
+    def combine_like_terms(self, likeness):
+        return self
+    
     def interpret(self):
         return self.value
     
@@ -142,6 +148,9 @@ class Negative(IntExpression):
     def __init__(self, expr):
         super().__init__()
         self.expr = expr
+    
+    def combine_like_terms(self, likeness):
+        return self.expr.combine_like_terms(likeness)
     
     def interpret(self):
         expr_interpreted = self.expr.interpret()
@@ -302,6 +311,19 @@ class Plus(BinaryExpression):
     def to_pos_neg(self):
         return Plus(self.l.to_pos_neg(), self.r.to_pos_neg())
     
+    def combine_like_terms(self, likeness):
+        l = self.l.combine_like_terms(likeness)
+        r = self.r.combine_like_terms(likeness)
+        if l == likeness and r == likeness:
+            return Times(Int(2), likeness)
+        if l == likeness and isinstance(r, Times) and isinstance(r.l, Int) and r.r == likeness:
+            return Times(Int(r.l.value + 1), likeness)
+        if r == likeness and isinstance(l, Times) and isinstance(l.l, Int) and l.r == likeness:
+            return Times(Int(l.l.value + 1), likeness),
+        if isinstance(l, Times) and isinstance(r, Times) and isinstance(l.l, Int) and isinstance(r.l, Int) and l.r == likeness and r.r == likeness:
+            return Times(Int(l.l.value + r.l.value), likeness)
+        return Plus(l, r)
+    
     def pos_neg_to_minus(self):
         if isinstance(self.r, Negative):
             return Minus(self.l.pos_neg_to_minus(), self.r.expr.pos_neg_to_minus())
@@ -329,6 +351,9 @@ class Minus(BinaryExpression):
     
     def pos_neg_to_minus(self):
         return Minus(self.l.pos_neg_to_minus(), self.r.pos_neg_to_minus())
+    
+    def combine_like_terms(self, likeness):
+        return Minus(self.l.combine_like_terms(likeness), self.r.combine_like_terms(likeness))
 
 class Times(BinaryExpression):
     def __init__(self, l, r):
@@ -352,6 +377,9 @@ class Times(BinaryExpression):
         if isinstance(self.r, Times):
             return Times(Times(self.l, self.r.l), self.r.r)
         return self
+    
+    def combine_like_terms(self, likeness):
+        return Times(self.l.combine_like_terms(likeness), self.r.combine_like_terms(likeness))
 
 class BooleanExpression(BinaryExpression):
     def __init__(self):
@@ -362,6 +390,9 @@ class Equals(BooleanExpression):
         super().__init__()
         self.l = l
         self.r = r
+    
+    def combine_like_terms(self, likeness):
+        return Equals(self.l.combine_like_terms(likeness), self.r.combine_like_terms(likeness))
     
     def interpret(self):
         l_interpreted = self.l.interpret()
@@ -402,6 +433,9 @@ class Var(Expression):
     def __init__(self, id: str):
         super().__init__()
         self.id = id
+
+    def combine_like_terms(self, likeness):
+        return self
     
     def interpret(self):
         return InterpreterError("{} cannot be interpreted".format(self))

@@ -35,13 +35,13 @@ def solve_q(start_str, v, af):
     return Question("Solve for '{}' in '{}'".format(v, start_str), af)
 
 questions = [
-    solve_q("x = 3", Var("x"), check_answer(Equals(Var("x"), Int(3)))),
-    # x + n = n
-    solve_q("x + n = n", Var("x"), check_answer(Equals(Var("x"), Int(0)))),
-
+    # solve_q("x = 3", Var("x"), check_answer(Equals(Var("x"), Int(3)))),
+    # solve_q("x + n = n", Var("x"), check_answer(Equals(Var("x"), Int(0)))),
     conv_q("n + n", "2 * n", check_answer(Times(Int(2), Var("n")))),
+    conv_q("1 + 1", "2 * 1", check_answer(Times(Int(2), Int(1)))),
     conv_q("n + (n + n)", "3 * n", check_answer(Times(Int(3), Var("n")))),
     conv_q("(n + n) + n", "3 * n", check_answer(Times(Int(3), Var("n")))),
-    conv_q("-1 + (2 + 1)", "0", check_answer(Int(2))),
-    conv_q("(-1 + 2) + (-2 + 1)", "0", check_answer(Int(0)))
+    conv_q("a + (4 * a)", "5 * a", check_answer(Times(Int(5), Var("a")))),
+    conv_q("a + (a * 4)", "5 * a", check_answer(Times(Int(5), Var("a")))),
+    conv_q("(3 + a) + (a * 4)", "7 * a", check_answer(Times(Int(7), Var("a")))),
 ]
