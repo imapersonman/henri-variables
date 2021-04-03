@@ -14,7 +14,7 @@ documentation = [
     "expr.mz(): same as expr.minus_to_zero()",
     "expr.sub_mz(): Changes sub_expr in expr using minus_to_zero()",
     "expr.remove_add_zeroes(): Removes all zeroes being added inside of expr",
-    "expr.plus_to_times(): Changes all subexpressions of the form 'n + n + ... + n' to 'm * n'",
+    "expr.combine_like_terms(): Changes all subexpressions of the form 'n + n + ... + n' to 'm * n'",
     # "expr.both_sides_plus(expr_to_add): Adds expr_to_add to both sides of the equal sign",
     "expr.both_sides_minus(expr_to_add): Adds expr_to_add to both sides of the equal sign"
 ]
