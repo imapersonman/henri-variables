@@ -14,9 +14,9 @@ documentation = [
     "expr.mz(): same as expr.minus_to_zero()",
     "expr.sub_mz(): Changes sub_expr in expr using minus_to_zero()",
     "expr.remove_add_zeroes(): Removes all zeroes being added inside of expr",
-    "expr.combine_like_terms(): Changes all subexpressions of the form 'n + n + ... + n' to 'm * n'",
+    "expr.combine_like_terms(n): Changes all subexpressions of the form 'n + n + ... + n' to 'm * n'",
     # "expr.both_sides_plus(expr_to_add): Adds expr_to_add to both sides of the equal sign",
-    "expr.both_sides_minus(expr_to_add): Adds expr_to_add to both sides of the equal sign"
+    # "expr.both_sides_minus(expr_to_add): Adds expr_to_add to both sides of the equal sign"
 ]
 
 def check_or_answer(a1, a2):
@@ -35,13 +35,12 @@ def solve_q(start_str, v, af):
     return Question("Solve for '{}' in '{}'".format(v, start_str), af)
 
 questions = [
-    # solve_q("x = 3", Var("x"), check_answer(Equals(Var("x"), Int(3)))),
-    # solve_q("x + n = n", Var("x"), check_answer(Equals(Var("x"), Int(0)))),
     conv_q("n + n", "2 * n", check_answer(Times(Int(2), Var("n")))),
     conv_q("1 + 1", "2 * 1", check_answer(Times(Int(2), Int(1)))),
     conv_q("n + (n + n)", "3 * n", check_answer(Times(Int(3), Var("n")))),
     conv_q("(n + n) + n", "3 * n", check_answer(Times(Int(3), Var("n")))),
     conv_q("a + (4 * a)", "5 * a", check_answer(Times(Int(5), Var("a")))),
     conv_q("a + (a * 4)", "5 * a", check_answer(Times(Int(5), Var("a")))),
-    conv_q("(3 + a) + (a * 4)", "7 * a", check_answer(Times(Int(7), Var("a")))),
+    conv_q("(3 * a) + (a * 4)", "7 * a", check_answer(Times(Int(7), Var("a")))),
+    conv_q("(3 + a) + (a * 4)", "3 + (5 * a)", check_answer(Plus(Int(3), Times(Int(5), Var("a"))))),
 ]

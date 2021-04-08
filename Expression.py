@@ -54,13 +54,13 @@ class Expression:
         return self.associate_r_to_l()
     
     def sub_alr(self, sub):
-        return self.rewrite_subexpression(sub, sub.associate_l_to_r())
+        return self.dumb_rw_se(sub, sub.associate_l_to_r())
     
     def sub_arl(self, sub):
-        return self.rewrite_subexpression(sub, sub.associate_r_to_l())
+        return self.dumb_rw_se(sub, sub.associate_r_to_l())
     
     def sub_comm(self, sub):
-        return self.rewrite_subexpression(sub, sub.commute())
+        return self.dumb_rw_se(sub, sub.commute())
 
     def associate_r_to_l(self):
         raise Exception("associate_r_to_l unimplemented")
@@ -72,7 +72,7 @@ class Expression:
         return self.minus_to_zero()
     
     def sub_mz(self, sub):
-        return self.rewrite_subexpression(sub, sub.mz())
+        return self.dumb_rw_se(sub, sub.mz())
 
     def to_python_string(self):
         raise Exception("to_python_string unimplemented")
@@ -150,7 +150,7 @@ class Negative(IntExpression):
         self.expr = expr
     
     def combine_like_terms(self, likeness):
-        return self.expr.combine_like_terms(likeness)
+        return Negative(self.expr.combine_like_terms(likeness))
     
     def interpret(self):
         expr_interpreted = self.expr.interpret()
@@ -237,20 +237,28 @@ class BinaryExpression(IntExpression):
             return self.r.remove_add_zeroes()
         if self.name == "+" and self.r == Int(0):
             return self.l.remove_add_zeroes()
-        return BinaryExpression(self.name, self.l.remove_add_zeroes(), self.r.remove_add_zeroes(), self.f)
+        return BinaryExpression(self.name, self.l.remove_add_zeroes(), self.r.remove_add_zeroes(), self.f).narrow()
 
     def rewrite_subexpression(self, subexpression, equivalent):
         if subexpression == self and equivalent.interpret() == self.interpret():
             return equivalent
-        return BinaryExpression(self.name, self.l.rewrite_subexpression(subexpression, equivalent), self.r.rewrite_subexpression(subexpression, equivalent), self.f)
+        return BinaryExpression(self.name, self.l.rewrite_subexpression(subexpression, equivalent), self.r.rewrite_subexpression(subexpression, equivalent), self.f).narrow()
+    
+    def narrow(self):
+        if self.name == "+":
+            return Plus(self.l, self.r)
+        if self.name == "*":
+            return Times(self.l, self.r)
+        if self.name == "-":
+            return Minus(self.l, self.r)
     
     def dumb_rw_se(self, sube, equiv):
         if (sube == self):
             return equiv
-        return BinaryExpression(self.name, self.l.dumb_rw_se(sube, equiv), self.r.dumb_rw_se(sube, equiv), self.f)
+        return BinaryExpression(self.name, self.l.dumb_rw_se(sube, equiv), self.r.dumb_rw_se(sube, equiv), self.f).narrow()
     
     def substitute(self, v, expr):
-        return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f)
+        return BinaryExpression(self.name, self.l.substitute(v, expr), self.r.substitute(v, expr), self.f).narrow()
     
     def to_binary_python_string(self, class_name):
         return "{}({}, {})".format(class_name, self.l.to_python_string(), self.r.to_python_string())
@@ -316,10 +324,16 @@ class Plus(BinaryExpression):
         r = self.r.combine_like_terms(likeness)
         if l == likeness and r == likeness:
             return Times(Int(2), likeness)
-        if l == likeness and isinstance(r, Times) and isinstance(r.l, Int) and r.r == likeness:
-            return Times(Int(r.l.value + 1), likeness)
-        if r == likeness and isinstance(l, Times) and isinstance(l.l, Int) and l.r == likeness:
-            return Times(Int(l.l.value + 1), likeness),
+        if l == likeness and isinstance(r, Times) and r.r == likeness:
+            if isinstance(r.l, Int):
+                return Times(Int(r.l.value + 1), likeness)
+            if isinstance(r.l, Negative) and isinstance(r.l.expr, Int):
+                return Times(Int(r.l.expr.value + 1), likeness)
+        if r == likeness and isinstance(l, Times) and l.r == likeness:
+            if isinstance(l.l, Int):
+                return Times(Int(l.l.value + 1), likeness)
+            if isinstance(l.l, Negative) and isinstance(l.l.expr, Int):
+                return Times(Int(l.l.expr.value + 1), likeness)
         if isinstance(l, Times) and isinstance(r, Times) and isinstance(l.l, Int) and isinstance(r.l, Int) and l.r == likeness and r.r == likeness:
             return Times(Int(l.l.value + r.l.value), likeness)
         return Plus(l, r)
